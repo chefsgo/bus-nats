@@ -108,15 +108,6 @@ func (connect *natsBusConnect) Start() error {
 	for subKey, subVal := range connect.subs {
 		key := subKey
 		nc.QueueSubscribe(key, subVal.Group, func(msg *nats.Msg) {
-
-			// busMsg := &bus.Msg{
-			// 	Name: key, Data: msg.Data, Reply: msg.Reply,
-			// 	Header: make(bus.Header),
-			// }
-			// for k, v := range msg.Header {
-			// 	busMsg.Header[k] = v
-			// }
-
 			connect.delegate.Serve(key, msg.Data, func(data []byte, err error) {
 				if msg.Reply != "" {
 					if err == nil && data != nil {
@@ -139,17 +130,10 @@ func (connect *natsBusConnect) Request(name string, data []byte, timeout time.Du
 	}
 	nc := connect.client
 
-	natsMsg := nats.NewMsg(name)
-	natsMsg.Data = data
-
-	println("nats req 1", name, timeout)
-
-	replyMsg, err := nc.RequestMsg(natsMsg, timeout)
+	reply, err := nc.Request(name, data, timeout)
 	if err != nil {
 		return nil, err
 	}
 
-	println("nats req 2", name, err)
-
-	return replyMsg.Data, nil
+	return reply.Data, nil
 }
